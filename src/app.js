@@ -1,6 +1,16 @@
 const cors = require("cors");
 const express = require("express");
 
+function toReservationInput(body) {
+  return {
+    userId: body.userId,
+    resourceId: body.resourceId,
+    startAt: body.startAt,
+    endAt: body.endAt,
+    idempotencyKey: body.idempotencyKey
+  };
+}
+
 function createApp({ reservationService } = {}) {
   const app = express();
 
@@ -13,7 +23,9 @@ function createApp({ reservationService } = {}) {
 
   app.post("/reservations", async (request, response, next) => {
     try {
-      const reservation = await reservationService.createReservation(request.body);
+      const reservation = await reservationService.createReservation(
+        toReservationInput(request.body)
+      );
 
       response.status(201).json(reservation);
     } catch (error) {
