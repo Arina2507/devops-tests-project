@@ -50,6 +50,16 @@ function createApp({ reservationService } = {}) {
     response.status(200).json({ status: "ok" });
   });
 
+  app.get("/reservations", async (request, response, next) => {
+    try {
+      const reservations = await reservationService.listReservations();
+
+      response.status(200).json(reservations);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/reservations", async (request, response, next) => {
     try {
       const reservation = await reservationService.createReservation(
