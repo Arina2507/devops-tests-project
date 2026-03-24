@@ -1,4 +1,17 @@
 services:
+  app:
+    build:
+      context: .
+    container_name: reservation-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/reservation_system?schema=public
+    ports:
+      - "3001:3000"
+
   postgres:
     image: postgres:16-alpine
     container_name: reservation-postgres
@@ -7,7 +20,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "55432:5432"
+      - "55433:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
