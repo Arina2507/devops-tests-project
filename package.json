@@ -1,0 +1,36 @@
+{
+  "name": "devops-tests-project",
+  "version": "1.0.0",
+  "description": "Reservation system built with TDD, CI/CD, Docker, and Kubernetes.",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "test": "jest --runInBand --passWithNoTests",
+    "test:coverage": "jest --coverage --runInBand --passWithNoTests",
+    "test:unit": "jest --runInBand tests/unit --passWithNoTests",
+    "test:integration": "jest --runInBand tests/integration --passWithNoTests",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
+  },
+  "keywords": [
+    "reservation",
+    "tdd",
+    "devops",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "jest": "^30.0.5",
+    "nodemon": "^3.1.10",
+    "prisma": "^6.5.0",
+    "supertest": "^7.1.0"
+  }
+}
