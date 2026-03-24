@@ -77,12 +77,16 @@ class ReservationService {
     const resource = await this.resourceRepository.findById(resourceId);
     const startAt = new Date(startAtValue);
     const endAt = new Date(endAtValue);
-    const startHour = startAt.getUTCHours() + startAt.getUTCMinutes() / 60;
-    const endHour = endAt.getUTCHours() + endAt.getUTCMinutes() / 60;
+    const startHour = this.toUtcHourValue(startAt);
+    const endHour = this.toUtcHourValue(endAt);
 
     if (startHour < resource.openHour || endHour > resource.closeHour) {
       throw new Error("Reservation is outside working hours");
     }
+  }
+
+  toUtcHourValue(date) {
+    return date.getUTCHours() + date.getUTCMinutes() / 60;
   }
 }
 
