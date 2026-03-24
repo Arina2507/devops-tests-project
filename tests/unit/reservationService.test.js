@@ -248,4 +248,59 @@ describe("ReservationService", () => {
       })
     ).rejects.toThrow("Reservation is outside working hours");
   });
+
+  it("creates reservation when input is valid", async () => {
+    const now = new Date("2026-03-24T08:00:00Z");
+    const startAt = "2026-03-24T10:00:00Z";
+    const endAt = "2026-03-24T11:00:00Z";
+    const createdReservation = {
+      id: "reservation-1",
+      userId: "user-1",
+      resourceId: "resource-1",
+      startAt,
+      endAt,
+      status: "PENDING"
+    };
+
+    const reservationRepository = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(null),
+      findActiveByUserId: jest.fn().mockResolvedValue([]),
+      findOverlappingForResource: jest.fn().mockResolvedValue([]),
+      create: jest.fn().mockResolvedValue(createdReservation)
+    };
+
+    const resourceRepository = {
+      findById: jest.fn().mockResolvedValue({
+        id: "resource-1",
+        openHour: 9,
+        closeHour: 18
+      })
+    };
+
+    const userRepository = {
+      findById: jest.fn().mockResolvedValue({ id: "user-1" })
+    };
+
+    const service = new ReservationService({
+      reservationRepository,
+      resourceRepository,
+      userRepository,
+      now: () => now
+    });
+
+    const result = await service.createReservation({
+      userId: "user-1",
+      resourceId: "resource-1",
+      startAt,
+      endAt
+    });
+
+    expect(result).toEqual(createdReservation);
+    expect(reservationRepository.create).toHaveBeenCalledWith({
+      userId: "user-1",
+      resourceId: "resource-1",
+      startAt: new Date(startAt),
+      endAt: new Date(endAt)
+    });
+  });
 });
