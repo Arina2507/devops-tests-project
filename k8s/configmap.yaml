@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reservation-app-config
+  namespace: reservation-system
+data:
+  PORT: "3000"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reservation-postgres-config
+  namespace: reservation-system
+data:
+  POSTGRES_DB: reservation_system
+  POSTGRES_USER: postgres
