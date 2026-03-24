@@ -1,3 +1,5 @@
+const MAX_ACTIVE_RESERVATIONS = 3;
+
 class ReservationService {
   constructor({ reservationRepository, resourceRepository, userRepository, now }) {
     this.reservationRepository = reservationRepository;
@@ -47,7 +49,7 @@ class ReservationService {
   async ensureUserHasFreeReservationSlot(userId) {
     const activeReservations = await this.reservationRepository.findActiveByUserId(userId);
 
-    if (activeReservations.length >= 3) {
+    if (activeReservations.length >= MAX_ACTIVE_RESERVATIONS) {
       throw new Error("User has reached the active reservation limit");
     }
   }
