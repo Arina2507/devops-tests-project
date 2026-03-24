@@ -105,4 +105,30 @@ describe("Reservation API", () => {
     });
     expect(reservationService.createReservation).not.toHaveBeenCalled();
   });
+
+  it("lists reservations", async () => {
+    const reservations = [
+      {
+        id: "reservation-1",
+        userId: "user-1",
+        resourceId: "resource-1",
+        startAt: "2026-03-24T10:00:00Z",
+        endAt: "2026-03-24T11:00:00Z",
+        status: "PENDING"
+      }
+    ];
+
+    const reservationService = {
+      createReservation: jest.fn(),
+      listReservations: jest.fn().mockResolvedValue(reservations)
+    };
+
+    const app = createApp({ reservationService });
+
+    const response = await request(app).get("/reservations");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(reservations);
+    expect(reservationService.listReservations).toHaveBeenCalledTimes(1);
+  });
 });
