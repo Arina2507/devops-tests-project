@@ -17,12 +17,16 @@ class ReservationService {
 
     await this.validateReservationCreation(input);
 
-    return this.reservationRepository.create({
+    return this.reservationRepository.create(this.toReservationCreateData(input));
+  }
+
+  toReservationCreateData(input) {
+    return {
       userId: input.userId,
       resourceId: input.resourceId,
       startAt: new Date(input.startAt),
       endAt: new Date(input.endAt)
-    });
+    };
   }
 
   async resolveExistingReservation(input) {
