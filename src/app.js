@@ -9,6 +9,14 @@ const conflictMessages = new Set([
   "Reservation is outside working hours"
 ]);
 
+function getStatusCode(error) {
+  if (conflictMessages.has(error.message)) {
+    return 409;
+  }
+
+  return 500;
+}
+
 function toReservationInput(body) {
   return {
     userId: body.userId,
@@ -42,7 +50,7 @@ function createApp({ reservationService } = {}) {
   });
 
   app.use((error, request, response, next) => {
-    const status = conflictMessages.has(error.message) ? 409 : 500;
+    const status = getStatusCode(error);
 
     response.status(status).json({ message: error.message });
   });
