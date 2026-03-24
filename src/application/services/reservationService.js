@@ -8,6 +8,7 @@ class ReservationService {
 
   async createReservation(input) {
     this.validateReservationTime(input.startAt, input.endAt);
+    await this.ensureNoOverlap(input.resourceId, input.startAt, input.endAt);
 
     return input;
   }
@@ -23,6 +24,18 @@ class ReservationService {
 
     if (endAt <= startAt) {
       throw new Error("End time must be after start time");
+    }
+  }
+
+  async ensureNoOverlap(resourceId, startAt, endAt) {
+    const overlappingReservations = await this.reservationRepository.findOverlappingForResource(
+      resourceId,
+      new Date(startAt),
+      new Date(endAt)
+    );
+
+    if (overlappingReservations.length > 0) {
+      throw new Error("Resource is already reserved for this time");
     }
   }
 }
