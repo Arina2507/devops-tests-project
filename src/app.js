@@ -1,6 +1,14 @@
 const cors = require("cors");
 const express = require("express");
 
+const conflictMessages = new Set([
+  "Start time is in the past",
+  "End time must be after start time",
+  "Resource is already reserved for this time",
+  "User has reached the active reservation limit",
+  "Reservation is outside working hours"
+]);
+
 function toReservationInput(body) {
   return {
     userId: body.userId,
@@ -34,7 +42,9 @@ function createApp({ reservationService } = {}) {
   });
 
   app.use((error, request, response, next) => {
-    response.status(500).json({ message: error.message });
+    const status = conflictMessages.has(error.message) ? 409 : 500;
+
+    response.status(status).json({ message: error.message });
   });
 
   return app;
