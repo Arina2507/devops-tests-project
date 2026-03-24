@@ -1,6 +1,13 @@
-const app = require("./app");
+const createApp = require("./app");
 
 const port = Number(process.env.PORT || 3000);
+const app = createApp({
+  reservationService: {
+    async createReservation() {
+      throw new Error("Reservation service is not configured yet");
+    }
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
