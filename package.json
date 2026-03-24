@@ -10,6 +10,9 @@
     "test:coverage": "jest --coverage --runInBand --passWithNoTests",
     "test:unit": "jest --runInBand tests/unit --passWithNoTests",
     "test:integration": "jest --runInBand tests/integration --passWithNoTests",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs postgres",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },
