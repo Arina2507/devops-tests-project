@@ -7,24 +7,19 @@ class ReservationService {
   }
 
   async createReservation(input) {
-    this.ensureStartTimeIsNotInPast(input.startAt);
-    this.ensureValidTimeRange(input.startAt, input.endAt);
+    this.validateReservationTime(input.startAt, input.endAt);
 
     return input;
   }
 
-  ensureStartTimeIsNotInPast(startAtValue) {
+  validateReservationTime(startAtValue, endAtValue) {
     const startAt = new Date(startAtValue);
+    const endAt = new Date(endAtValue);
     const currentTime = this.now();
 
     if (startAt < currentTime) {
       throw new Error("Start time is in the past");
     }
-  }
-
-  ensureValidTimeRange(startAtValue, endAtValue) {
-    const startAt = new Date(startAtValue);
-    const endAt = new Date(endAtValue);
 
     if (endAt <= startAt) {
       throw new Error("End time must be after start time");
