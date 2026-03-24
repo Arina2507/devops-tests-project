@@ -7,10 +7,14 @@ class ReservationService {
   }
 
   async createReservation(input) {
-    this.validateReservationTime(input.startAt, input.endAt);
-    await this.ensureNoOverlap(input.resourceId, input.startAt, input.endAt);
+    await this.validateReservationCreation(input);
 
     return input;
+  }
+
+  async validateReservationCreation(input) {
+    this.validateReservationTime(input.startAt, input.endAt);
+    await this.ensureNoOverlap(input.resourceId, input.startAt, input.endAt);
   }
 
   validateReservationTime(startAtValue, endAtValue) {
