@@ -85,4 +85,24 @@ describe("Reservation API", () => {
       message: "User has reached the active reservation limit"
     });
   });
+
+  it("returns bad request when payload is invalid", async () => {
+    const reservationService = {
+      createReservation: jest.fn()
+    };
+
+    const app = createApp({ reservationService });
+
+    const response = await request(app)
+      .post("/reservations")
+      .send({
+        userId: "user-1"
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      message: "Invalid reservation payload"
+    });
+    expect(reservationService.createReservation).not.toHaveBeenCalled();
+  });
 });
