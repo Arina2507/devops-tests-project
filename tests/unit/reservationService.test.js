@@ -115,4 +115,49 @@ describe("ReservationService", () => {
       })
     ).rejects.toThrow("Resource is already reserved for this time");
   });
+
+  it("rejects reservation when user already has too many active reservations", async () => {
+    const now = new Date("2026-03-24T08:00:00Z");
+    const startAt = "2026-03-24T10:00:00Z";
+    const endAt = "2026-03-24T11:00:00Z";
+
+    const reservationRepository = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(null),
+      findActiveByUserId: jest.fn().mockResolvedValue([
+        { id: "reservation-1" },
+        { id: "reservation-2" },
+        { id: "reservation-3" }
+      ]),
+      findOverlappingForResource: jest.fn().mockResolvedValue([]),
+      create: jest.fn()
+    };
+
+    const resourceRepository = {
+      findById: jest.fn().mockResolvedValue({
+        id: "resource-1",
+        openHour: 9,
+        closeHour: 18
+      })
+    };
+
+    const userRepository = {
+      findById: jest.fn().mockResolvedValue({ id: "user-1" })
+    };
+
+    const service = new ReservationService({
+      reservationRepository,
+      resourceRepository,
+      userRepository,
+      now: () => now
+    });
+
+    await expect(
+      service.createReservation({
+        userId: "user-1",
+        resourceId: "resource-1",
+        startAt,
+        endAt
+      })
+    ).rejects.toThrow("User has reached the active reservation limit");
+  });
 });
