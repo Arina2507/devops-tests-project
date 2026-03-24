@@ -14,6 +14,7 @@ class ReservationService {
 
   async validateReservationCreation(input) {
     this.validateReservationTime(input.startAt, input.endAt);
+    await this.ensureUserHasFreeReservationSlot(input.userId);
     await this.ensureNoOverlap(input.resourceId, input.startAt, input.endAt);
   }
 
@@ -40,6 +41,14 @@ class ReservationService {
 
     if (overlappingReservations.length > 0) {
       throw new Error("Resource is already reserved for this time");
+    }
+  }
+
+  async ensureUserHasFreeReservationSlot(userId) {
+    const activeReservations = await this.reservationRepository.findActiveByUserId(userId);
+
+    if (activeReservations.length >= 3) {
+      throw new Error("User has reached the active reservation limit");
     }
   }
 }
