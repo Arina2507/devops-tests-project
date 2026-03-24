@@ -7,14 +7,18 @@ class ReservationService {
   }
 
   async createReservation(input) {
-    const startAt = new Date(input.startAt);
+    this.ensureStartTimeIsNotInPast(input.startAt);
+
+    return input;
+  }
+
+  ensureStartTimeIsNotInPast(startAtValue) {
+    const startAt = new Date(startAtValue);
     const currentTime = this.now();
 
     if (startAt < currentTime) {
       throw new Error("Start time is in the past");
     }
-
-    return input;
   }
 }
 
