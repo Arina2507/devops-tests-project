@@ -160,4 +160,51 @@ describe("ReservationService", () => {
       })
     ).rejects.toThrow("User has reached the active reservation limit");
   });
+
+  it("returns existing reservation for repeated idempotency key", async () => {
+    const now = new Date("2026-03-24T08:00:00Z");
+    const startAt = "2026-03-24T10:00:00Z";
+    const endAt = "2026-03-24T11:00:00Z";
+    const existingReservation = {
+      id: "reservation-1",
+      userId: "user-1",
+      resourceId: "resource-1",
+      startAt,
+      endAt,
+      idempotencyKey: "idem-1"
+    };
+
+    const reservationRepository = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(existingReservation),
+      findActiveByUserId: jest.fn(),
+      findOverlappingForResource: jest.fn(),
+      create: jest.fn()
+    };
+
+    const resourceRepository = {
+      findById: jest.fn()
+    };
+
+    const userRepository = {
+      findById: jest.fn()
+    };
+
+    const service = new ReservationService({
+      reservationRepository,
+      resourceRepository,
+      userRepository,
+      now: () => now
+    });
+
+    const result = await service.createReservation({
+      userId: "user-1",
+      resourceId: "resource-1",
+      startAt,
+      endAt,
+      idempotencyKey: "idem-1"
+    });
+
+    expect(result).toEqual(existingReservation);
+    expect(reservationRepository.create).not.toHaveBeenCalled();
+  });
 });
