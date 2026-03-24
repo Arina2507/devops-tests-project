@@ -207,4 +207,45 @@ describe("ReservationService", () => {
     expect(result).toEqual(existingReservation);
     expect(reservationRepository.create).not.toHaveBeenCalled();
   });
+
+  it("rejects reservation outside resource working hours", async () => {
+    const now = new Date("2026-03-24T08:00:00Z");
+    const startAt = "2026-03-24T08:30:00Z";
+    const endAt = "2026-03-24T09:30:00Z";
+
+    const reservationRepository = {
+      findByIdempotencyKey: jest.fn().mockResolvedValue(null),
+      findActiveByUserId: jest.fn().mockResolvedValue([]),
+      findOverlappingForResource: jest.fn().mockResolvedValue([]),
+      create: jest.fn()
+    };
+
+    const resourceRepository = {
+      findById: jest.fn().mockResolvedValue({
+        id: "resource-1",
+        openHour: 9,
+        closeHour: 18
+      })
+    };
+
+    const userRepository = {
+      findById: jest.fn().mockResolvedValue({ id: "user-1" })
+    };
+
+    const service = new ReservationService({
+      reservationRepository,
+      resourceRepository,
+      userRepository,
+      now: () => now
+    });
+
+    await expect(
+      service.createReservation({
+        userId: "user-1",
+        resourceId: "resource-1",
+        startAt,
+        endAt
+      })
+    ).rejects.toThrow("Reservation is outside working hours");
+  });
 });
