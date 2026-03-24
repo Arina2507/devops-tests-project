@@ -9,9 +9,23 @@ class ReservationService {
   }
 
   async createReservation(input) {
+    const existingReservation = await this.findExistingByIdempotencyKey(input.idempotencyKey);
+
+    if (existingReservation) {
+      return existingReservation;
+    }
+
     await this.validateReservationCreation(input);
 
     return input;
+  }
+
+  async findExistingByIdempotencyKey(idempotencyKey) {
+    if (!idempotencyKey) {
+      return null;
+    }
+
+    return this.reservationRepository.findByIdempotencyKey(idempotencyKey);
   }
 
   async validateReservationCreation(input) {
