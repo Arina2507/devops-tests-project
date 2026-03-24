@@ -1,5 +1,6 @@
 const cors = require("cors");
 const express = require("express");
+const { z } = require("zod");
 
 const conflictMessages = new Set([
   "Start time is in the past",
@@ -9,7 +10,19 @@ const conflictMessages = new Set([
   "Reservation is outside working hours"
 ]);
 
+const reservationInputSchema = z.object({
+  userId: z.string().min(1),
+  resourceId: z.string().min(1),
+  startAt: z.string().min(1),
+  endAt: z.string().min(1),
+  idempotencyKey: z.string().min(1).optional()
+});
+
 function getStatusCode(error) {
+  if (error.message === "Invalid reservation payload") {
+    return 400;
+  }
+
   if (conflictMessages.has(error.message)) {
     return 409;
   }
@@ -18,13 +31,13 @@ function getStatusCode(error) {
 }
 
 function toReservationInput(body) {
-  return {
-    userId: body.userId,
-    resourceId: body.resourceId,
-    startAt: body.startAt,
-    endAt: body.endAt,
-    idempotencyKey: body.idempotencyKey
-  };
+  const result = reservationInputSchema.safeParse(body);
+
+  if (!result.success) {
+    throw new Error("Invalid reservation payload");
+  }
+
+  return result.data;
 }
 
 function createApp({ reservationService } = {}) {
