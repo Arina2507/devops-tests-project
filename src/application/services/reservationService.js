@@ -34,6 +34,7 @@ class ReservationService {
 
   async validateReservationCreation(input) {
     this.validateReservationTime(input.startAt, input.endAt);
+    await this.ensureWithinWorkingHours(input.resourceId, input.startAt, input.endAt);
     await this.ensureUserHasFreeReservationSlot(input.userId);
     await this.ensureNoOverlap(input.resourceId, input.startAt, input.endAt);
   }
@@ -69,6 +70,18 @@ class ReservationService {
 
     if (activeReservations.length >= MAX_ACTIVE_RESERVATIONS) {
       throw new Error("User has reached the active reservation limit");
+    }
+  }
+
+  async ensureWithinWorkingHours(resourceId, startAtValue, endAtValue) {
+    const resource = await this.resourceRepository.findById(resourceId);
+    const startAt = new Date(startAtValue);
+    const endAt = new Date(endAtValue);
+    const startHour = startAt.getUTCHours() + startAt.getUTCMinutes() / 60;
+    const endHour = endAt.getUTCHours() + endAt.getUTCMinutes() / 60;
+
+    if (startHour < resource.openHour || endHour > resource.closeHour) {
+      throw new Error("Reservation is outside working hours");
     }
   }
 }
