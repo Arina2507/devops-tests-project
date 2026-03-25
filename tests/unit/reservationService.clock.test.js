@@ -1,6 +1,7 @@
 const ReservationService = require("../../src/application/services/reservationService");
 
 describe("ReservationService clock stub", () => {
+  // Unit: injected clock
   it("uses injected clock stub for time checks", async () => {
     const fixedNow = new Date("2026-03-24T08:00:00Z");
     const createdReservation = { id: "reservation-1" };

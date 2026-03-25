@@ -1,6 +1,7 @@
 const ReservationService = require("../../src/application/services/reservationService");
 
 describe("ReservationService", () => {
+  // Unit: past reservation
   it("rejects past reservation", async () => {
     const now = new Date("2026-03-24T12:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";
@@ -38,6 +39,7 @@ describe("ReservationService", () => {
     ).rejects.toThrow("Start time is in the past");
   });
 
+  // Unit: invalid time range
   it("rejects invalid time range", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";
@@ -75,6 +77,7 @@ describe("ReservationService", () => {
     ).rejects.toThrow("End time must be after start time");
   });
 
+  // Unit: overlap check
   it("rejects overlapping reservation", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";
@@ -116,6 +119,7 @@ describe("ReservationService", () => {
     ).rejects.toThrow("Resource is already reserved for this time");
   });
 
+  // Unit: user reservation limit
   it("rejects reservation when user already has too many active reservations", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";
@@ -161,6 +165,7 @@ describe("ReservationService", () => {
     ).rejects.toThrow("User has reached the active reservation limit");
   });
 
+  // Unit: idempotency
   it("returns existing reservation for repeated idempotency key", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";
@@ -208,6 +213,7 @@ describe("ReservationService", () => {
     expect(reservationRepository.create).not.toHaveBeenCalled();
   });
 
+  // Unit: working hours
   it("rejects reservation outside resource working hours", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T08:30:00Z";
@@ -249,6 +255,7 @@ describe("ReservationService", () => {
     ).rejects.toThrow("Reservation is outside working hours");
   });
 
+  // Unit: valid reservation
   it("creates reservation when input is valid", async () => {
     const now = new Date("2026-03-24T08:00:00Z");
     const startAt = "2026-03-24T10:00:00Z";

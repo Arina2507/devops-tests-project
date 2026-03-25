@@ -3,6 +3,7 @@ const request = require("supertest");
 const createApp = require("../../src/app");
 
 describe("Reservation API", () => {
+  // Integration: create reservation
   it("creates reservation", async () => {
     const createdReservation = {
       id: "reservation-1",
@@ -38,6 +39,7 @@ describe("Reservation API", () => {
     });
   });
 
+  // Integration: overlap conflict
   it("returns conflict when reservation overlaps", async () => {
     const reservationService = {
       createReservation: jest
@@ -62,6 +64,7 @@ describe("Reservation API", () => {
     });
   });
 
+  // Integration: user limit conflict
   it("returns conflict when user reached active reservation limit", async () => {
     const reservationService = {
       createReservation: jest
@@ -86,6 +89,7 @@ describe("Reservation API", () => {
     });
   });
 
+  // Integration: invalid payload
   it("returns bad request when payload is invalid", async () => {
     const reservationService = {
       createReservation: jest.fn()
@@ -106,6 +110,7 @@ describe("Reservation API", () => {
     expect(reservationService.createReservation).not.toHaveBeenCalled();
   });
 
+  // Integration: list reservations
   it("lists reservations", async () => {
     const reservations = [
       {
