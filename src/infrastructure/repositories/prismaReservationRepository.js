@@ -68,6 +68,12 @@ class PrismaReservationRepository extends ReservationRepository {
     });
   }
 
+  async delete(id) {
+    return this.prisma.reservation.delete({
+      where: { id }
+    });
+  }
+
   async updateStatus(id, status) {
     return this.prisma.reservation.update({
       where: { id },

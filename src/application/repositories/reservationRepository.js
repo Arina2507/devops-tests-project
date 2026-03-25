@@ -19,6 +19,10 @@ class ReservationRepository {
     throw new Error("Method not implemented");
   }
 
+  async delete() {
+    throw new Error("Method not implemented");
+  }
+
   async updateStatus() {
     throw new Error("Method not implemented");
   }

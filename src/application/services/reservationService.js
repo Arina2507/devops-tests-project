@@ -24,6 +24,10 @@ class ReservationService {
     return this.reservationRepository.list();
   }
 
+  async deleteReservation(id) {
+    return this.reservationRepository.delete(id);
+  }
+
   async listResources() {
     return this.resourceRepository.list();
   }

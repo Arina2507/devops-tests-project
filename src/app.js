@@ -80,6 +80,16 @@ function createApp({ reservationService } = {}) {
     }
   });
 
+  app.delete("/reservations/:id", async (request, response, next) => {
+    try {
+      await reservationService.deleteReservation(request.params.id);
+
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.post("/reservations", async (request, response, next) => {
     try {
       const reservation = await reservationService.createReservation(

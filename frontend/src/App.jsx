@@ -34,6 +34,13 @@ function App() {
   const [messageType, setMessageType] = useState("error");
   const [loading, setLoading] = useState(true);
 
+  const selectedUser = users.find((user) => user.id === userId) || null;
+  const selectedResource = resources.find((resource) => resource.id === resourceId) || null;
+
+  async function reloadReferenceData() {
+    await Promise.all([loadUsers(), loadResources()]);
+  }
+
   async function loadUsers() {
     const nextUsers = await getJson("/users");
     setUsers(nextUsers);
@@ -102,6 +109,27 @@ function App() {
     }
   }
 
+  async function handleDeleteReservation(id) {
+    setMessage("");
+
+    try {
+      const response = await fetch(`/reservations/${id}`, {
+        method: "DELETE"
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete reservation");
+      }
+
+      await loadReservations();
+      setMessage("Reservation deleted");
+      setMessageType("success");
+    } catch (error) {
+      setMessage(error.message);
+      setMessageType("error");
+    }
+  }
+
   const emptyData = users.length === 0 || resources.length === 0;
 
   return (
@@ -134,9 +162,14 @@ function App() {
         </section>
 
         <section className="panel form-panel">
-          <div className="panel-head">
-            <p className="eyebrow">Create</p>
-            <h2>New reservation</h2>
+          <div className="panel-head row-between">
+            <div>
+              <p className="eyebrow">Create</p>
+              <h2>New reservation</h2>
+            </div>
+            <button className="secondary-button" type="button" onClick={reloadReferenceData}>
+              Reload data
+            </button>
           </div>
 
           {loading ? <p className="info-text">Loading data...</p> : null}
@@ -154,7 +187,7 @@ function App() {
               <select value={userId} onChange={(event) => setUserId(event.target.value)} disabled={loading || emptyData}>
                 {users.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.name}
+                    {user.name} · {user.email}
                   </option>
                 ))}
               </select>
@@ -165,11 +198,20 @@ function App() {
               <select value={resourceId} onChange={(event) => setResourceId(event.target.value)} disabled={loading || emptyData}>
                 {resources.map((resource) => (
                   <option key={resource.id} value={resource.id}>
-                    {resource.name} · {resource.type}
+                    {resource.name} · {resource.type} · {resource.openHour}:00-{resource.closeHour}:00
                   </option>
                 ))}
               </select>
             </label>
+
+            <div className="selection-summary">
+              <span>
+                Selected user: {selectedUser ? `${selectedUser.name} (${selectedUser.email})` : "none"}
+              </span>
+              <span>
+                Selected resource: {selectedResource ? `${selectedResource.name} (${selectedResource.type})` : "none"}
+              </span>
+            </div>
 
             <label className="field">
               <span>Start time</span>
@@ -211,7 +253,16 @@ function App() {
                 <li key={reservation.id} className="reservation-card">
                   <div className="reservation-top">
                     <strong>{reservation.resource.name}</strong>
-                    <span className="status-chip">{reservation.status}</span>
+                    <div className="reservation-actions">
+                      <span className="status-chip">{reservation.status}</span>
+                      <button
+                        className="delete-button"
+                        type="button"
+                        onClick={() => handleDeleteReservation(reservation.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                   <div className="reservation-details">
                     <span>User: {reservation.user.name}</span>
