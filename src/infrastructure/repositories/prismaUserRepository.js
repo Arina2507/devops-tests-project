@@ -10,6 +10,10 @@ class PrismaUserRepository extends UserRepository {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  async list() {
+    return this.prisma.user.findMany({ orderBy: { name: "asc" } });
+  }
+
   async findByEmail(email) {
     return this.prisma.user.findUnique({ where: { email } });
   }

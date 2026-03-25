@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
+    "dev:frontend": "npm run dev --prefix frontend",
     "start": "node src/server.js",
+    "build:frontend": "npm run build --prefix frontend",
     "test": "jest --runInBand --passWithNoTests",
     "test:coverage": "jest --coverage --runInBand --passWithNoTests",
     "test:unit": "jest --runInBand tests/unit --passWithNoTests",
@@ -13,6 +15,7 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs postgres",
+    "db:seed-demo": "node src/infrastructure/bootstrap/seedDemoData.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

@@ -50,6 +50,26 @@ function createApp({ reservationService } = {}) {
     response.status(200).json({ status: "ok" });
   });
 
+  app.get("/users", async (request, response, next) => {
+    try {
+      const users = await reservationService.listUsers();
+
+      response.status(200).json(users);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/resources", async (request, response, next) => {
+    try {
+      const resources = await reservationService.listResources();
+
+      response.status(200).json(resources);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/reservations", async (request, response, next) => {
     try {
       const reservations = await reservationService.listReservations();

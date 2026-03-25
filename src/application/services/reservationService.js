@@ -24,6 +24,14 @@ class ReservationService {
     return this.reservationRepository.list();
   }
 
+  async listResources() {
+    return this.resourceRepository.list();
+  }
+
+  async listUsers() {
+    return this.userRepository.list();
+  }
+
   toReservationCreateData(input) {
     return {
       userId: input.userId,
