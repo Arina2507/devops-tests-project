@@ -1,19 +1,54 @@
 # Reservation System
 
-This is a semester project for TDD and DevOps. Users can reserve shared resources such as rooms or sports courts.
+Reservation System is a semester project for TDD and DevOps. The application manages bookings for shared resources such as meeting rooms and sports courts.
 
-## Why this project
+## Project Goal
 
-I wanted one project that shows both parts:
+The goal was to build one project that shows both sides of the course work:
 
-- business logic
-- tests written step by step
-- simple frontend for demo
+- real business logic, not only CRUD
+- test-driven development of the core rules
+- database and API integration
 - Docker and Docker Compose
 - CI with GitHub Actions
 - Kubernetes manifests
+- a small frontend for demonstration
 
-## Domain
+## Business Logic
+
+The main business logic is implemented in `ReservationService`.
+
+File:
+
+- `src/application/services/reservationService.js`
+
+The service checks the request before saving anything to the database.
+
+### Implemented Rules
+
+1. A reservation cannot start in the past.
+2. `endAt` must be later than `startAt`.
+3. One resource cannot be booked for overlapping time ranges.
+4. One user can have at most 3 active reservations.
+5. A reservation must fit inside the working hours of the selected resource.
+6. The same `idempotencyKey` must not create a duplicate reservation.
+
+### Why These Rules Matter
+
+This project is not just about storing records in a table. The important part is that the system decides whether the reservation is allowed or not. That is why the service layer is the core of the application.
+
+### Reservation Creation Flow
+
+When a reservation is created, the backend does this:
+
+1. checks whether the same `idempotencyKey` was already used
+2. validates the time range
+3. checks the resource working hours
+4. checks the user active reservation limit
+5. checks overlap with existing reservations
+6. saves the reservation only if all rules pass
+
+## Domain Model
 
 Main entities:
 
@@ -21,16 +56,45 @@ Main entities:
 - `Resource`
 - `Reservation`
 
-Main rules:
+Database model:
 
-1. reservation cannot start in the past
-2. end time must be after start time
-3. resource cannot be double-booked
-4. user can have maximum 3 active reservations
-5. reservation must be inside working hours
-6. same `idempotencyKey` should not create duplicates
+- `User` has name, email, role
+- `Resource` has name, type, working hours and capacity
+- `Reservation` connects a user and a resource with `startAt`, `endAt`, `status`, and `idempotencyKey`
 
-## Stack
+Main schema file:
+
+- `prisma/schema.prisma`
+
+## Architecture
+
+The project uses a simple layered structure.
+
+```text
+frontend/                React + Vite UI
+src/
+  application/           services and repository contracts
+  infrastructure/        Prisma repositories and bootstrap scripts
+  app.js                 Express routes and request validation
+  server.js              application startup
+tests/
+  unit/
+  integration/
+prisma/
+k8s/
+```
+
+### Layer Responsibilities
+
+- `application/services` contains business rules
+- `application/repositories` contains repository interfaces
+- `infrastructure/repositories` contains Prisma implementations
+- `app.js` contains HTTP routes and error mapping
+- `server.js` starts the backend
+
+This separation makes the business logic easier to test.
+
+## Tech Stack
 
 - Node.js
 - Express
@@ -44,23 +108,6 @@ Main rules:
 - GitHub Actions
 - Kubernetes
 
-## Structure
-
-```text
-src/
-	application/
-	infrastructure/
-	app.js
-	server.js
-frontend/
- 	src/
-tests/
-	unit/
-	integration/
-prisma/
-k8s/
-```
-
 ## API
 
 ### `GET /health`
@@ -71,10 +118,6 @@ Returns:
 { "status": "ok" }
 ```
 
-### `GET /reservations`
-
-Returns all reservations.
-
 ### `GET /users`
 
 Returns users for the frontend form.
@@ -83,56 +126,97 @@ Returns users for the frontend form.
 
 Returns resources for the frontend form.
 
-### `DELETE /reservations/:id`
+### `GET /reservations`
 
-Deletes a reservation.
+Returns all reservations.
 
 ### `POST /reservations`
+
+Creates a reservation.
 
 Example body:
 
 ```json
 {
-	"userId": "user-1",
-	"resourceId": "resource-1",
-	"startAt": "2026-03-24T10:00:00Z",
-	"endAt": "2026-03-24T11:00:00Z"
+  "userId": "user-1",
+  "resourceId": "resource-1",
+  "startAt": "2026-03-24T10:00:00Z",
+  "endAt": "2026-03-24T11:00:00Z"
 }
 ```
 
-Responses:
+Response codes:
 
-- `201` created
+- `201` reservation created
 - `400` invalid payload
-- `409` business rule error
+- `409` business rule conflict
 
-## Tests
+### `DELETE /reservations/:id`
 
-I used TDD: first test, then code, then small refactoring.
+Deletes a reservation.
 
-Unit tests check the rules in `ReservationService`.
+## TDD And Tests
 
-Integration tests check the API endpoints with Supertest.
+The core rules were implemented with TDD.
 
-Run all tests:
+Approach:
+
+1. write a failing test
+2. add the minimum code needed
+3. refactor without breaking behavior
+
+### Unit Tests
+
+Unit tests focus on `ReservationService`.
+
+Examples:
+
+- past reservation is rejected
+- invalid time range is rejected
+- overlapping reservation is rejected
+- active reservation limit is enforced
+- working hours are enforced
+- idempotency works correctly
+
+Files:
+
+- `tests/unit/reservationService.test.js`
+- `tests/unit/reservationService.clock.test.js`
+
+### Integration Tests
+
+Integration tests check the HTTP API behavior.
+
+Examples:
+
+- reservation is created successfully
+- invalid payload returns `400`
+- business conflicts return `409`
+- reservations list returns `200`
+
+File:
+
+- `tests/integration/reservationApi.test.js`
+
+### Run Tests
 
 ```bash
 npm test
 ```
 
-Run unit tests:
+Unit only:
 
 ```bash
 npm run test:unit
 ```
 
-Run integration tests:
+Integration only:
 
 ```bash
 npm run test:integration
 ```
 
-## Local run
+## Backend Local Run
 
 Install dependencies:
 
@@ -146,7 +230,7 @@ Generate Prisma client:
 npm run prisma:generate
 ```
 
-Start app:
+Start backend:
 
 ```bash
 npm run dev
@@ -159,6 +243,16 @@ npm run db:seed-demo
 ```
 
 ## Frontend
+
+The frontend is a small React + Vite application used for demonstration.
+
+What it can do:
+
+- load users and resources
+- create a reservation
+- show reservation list
+- delete a reservation
+- display backend errors in the UI
 
 Install frontend dependencies:
 
@@ -173,25 +267,25 @@ Start frontend:
 npm run dev
 ```
 
-Or from the project root:
+Or from project root:
 
 ```bash
 npm run dev:frontend
 ```
 
-Frontend runs on:
+Frontend URL:
 
 - `http://localhost:5173`
 
 ## Docker Compose
 
-Run app and database:
+Run backend and database together:
 
 ```bash
 docker compose up -d --build
 ```
 
-App:
+Backend:
 
 - `http://localhost:3001`
 - `http://localhost:3001/health`
@@ -208,28 +302,33 @@ docker compose down
 
 ## CI
 
-GitHub Actions workflow is in `.github/workflows/ci.yml`.
+GitHub Actions workflow file:
 
-It does:
+- `.github/workflows/ci.yml`
 
-1. `npm ci`
-2. `npm run prisma:generate`
-3. `npm test`
-4. `docker build`
+The workflow does this:
+
+1. installs dependencies
+2. generates Prisma client
+3. runs backend tests
+4. builds the Docker image
+
+This verifies that the project can be tested and built automatically.
 
 ## Kubernetes
 
-Manifests are in `k8s/`.
+Kubernetes manifests are in `k8s/`.
 
-They include:
+Included resources:
 
 - namespace
 - configmap
 - secret
 - postgres deployment and service
 - app deployment and service
+- persistent volume claim
 
-Apply:
+Apply manifests:
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
@@ -239,40 +338,41 @@ kubectl apply -f k8s/postgres.yaml
 kubectl apply -f k8s/app.yaml
 ```
 
-Check:
+Check resources:
 
 ```bash
 kubectl get all -n reservation-system
 ```
 
-Port forward app:
+Port forward backend:
 
 ```bash
 kubectl port-forward service/reservation-app 3001:3000 -n reservation-system
 ```
 
-## How I can present it
+## How To Present The Project
 
-I can show the project in this order:
+A simple order for presentation:
 
-1. explain the goal
-2. show entities and business rules
-3. show `ReservationService`
+1. explain the project goal
+2. show the entities and business rules
+3. open `ReservationService` and explain the validation flow
 4. show unit and integration tests
 5. show API routes in `src/app.js`
-6. show the React frontend and create/delete reservation
-7. show Dockerfile and `docker-compose.yml`
-8. show GitHub Actions workflow
+6. show the frontend and create/delete a reservation
+7. show Docker Compose
+8. show GitHub Actions CI
 9. show Kubernetes manifests
 
-## Current result
+## Current Result
 
-At this point the project has:
+At this point the project includes:
 
-- working API
-- working React frontend
-- tested service logic
+- working backend API
+- real business rules in the service layer
 - unit and integration tests
-- Docker setup
+- Prisma + PostgreSQL
+- Docker and Docker Compose
 - GitHub Actions CI
 - Kubernetes manifests
+- working React frontend for demonstration
