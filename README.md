@@ -1,364 +1,150 @@
 # Reservation System
 
-Reservation System is a semester project for TDD and DevOps. The application manages bookings for shared resources such as meeting rooms and sports courts.
+Semestrální projekt pro předměty TDD a DevOps. Projekt řeší rezervace sdílených resource, konkrétně zasedacích místností a sportovních kurtů.
 
-## Project Goal
+## Popis domény a funkcí
 
-The goal was to build one project that shows both sides of the course work:
-
-- real business logic, not only CRUD
-- test-driven development of the core rules
-- database and API integration
-- Docker and Docker Compose
-- CI with GitHub Actions
-- Kubernetes manifests
-- a small frontend for demonstration
-
-## Business Logic
-
-The main business logic is implemented in `ReservationService`.
-
-File:
-
-- `src/application/services/reservationService.js`
-
-The service checks the request before saving anything to the database.
-
-### Implemented Rules
-
-1. A reservation cannot start in the past.
-2. `endAt` must be later than `startAt`.
-3. One resource cannot be booked for overlapping time ranges.
-4. One user can have at most 3 active reservations.
-5. A reservation must fit inside the working hours of the selected resource.
-6. The same `idempotencyKey` must not create a duplicate reservation.
-
-### Why These Rules Matter
-
-This project is not just about storing records in a table. The important part is that the system decides whether the reservation is allowed or not. That is why the service layer is the core of the application.
-
-### Reservation Creation Flow
-
-When a reservation is created, the backend does this:
-
-1. checks whether the same `idempotencyKey` was already used
-2. validates the time range
-3. checks the resource working hours
-4. checks the user active reservation limit
-5. checks overlap with existing reservations
-6. saves the reservation only if all rules pass
-
-## Domain Model
-
-Main entities:
+Aplikace pracuje se třemi hlavními entitami:
 
 - `User`
 - `Resource`
 - `Reservation`
 
-Database model:
+Uživatel si může vytvořit rezervaci na konkrétní resource v daném čase. Hlavní smysl projektu ale není jen uložení záznamu do databáze. Důležité je, že backend kontroluje obchodní pravidla rezervací.
 
-- `User` has name, email, role
-- `Resource` has name, type, working hours and capacity
-- `Reservation` connects a user and a resource with `startAt`, `endAt`, `status`, and `idempotencyKey`
+Implementovaná pravidla:
 
-Main schema file:
+1. rezervace nesmí začínat v minulosti
+2. `endAt` musí být později než `startAt`
+3. stejná resource nesmí mít překrývající se rezervace
+4. jeden uživatel může mít maximálně 3 aktivní rezervace
+5. rezervace musí být v rámci pracovních hodin resource
+6. opakovaný request se stejným `idempotencyKey` nesmí vytvořit duplicitu
 
-- `prisma/schema.prisma`
+Hlavní business logika je implementovaná v souboru `src/application/services/reservationService.js`.
 
-## Architecture
+## Návod ke spuštění
 
-The project uses a simple layered structure.
+Projekt lze spustit několika způsoby.
 
-```text
-frontend/                React + Vite UI
-src/
-  application/           services and repository contracts
-  infrastructure/        Prisma repositories and bootstrap scripts
-  app.js                 Express routes and request validation
-  server.js              application startup
-tests/
-  unit/
-  integration/
-prisma/
-k8s/
-```
+### 1. Spuštění přes Docker
 
-### Layer Responsibilities
-
-- `application/services` contains business rules
-- `application/repositories` contains repository interfaces
-- `infrastructure/repositories` contains Prisma implementations
-- `app.js` contains HTTP routes and error mapping
-- `server.js` starts the backend
-
-This separation makes the business logic easier to test.
-
-## Tech Stack
-
-- Node.js
-- Express
-- Prisma
-- PostgreSQL
-- Jest
-- Supertest
-- React
-- Vite
-- Docker
-- GitHub Actions
-- Kubernetes
-
-## API
-
-### `GET /health`
-
-Returns:
-
-```json
-{ "status": "ok" }
-```
-
-### `GET /users`
-
-Returns users for the frontend form.
-
-### `GET /resources`
-
-Returns resources for the frontend form.
-
-### `GET /reservations`
-
-Returns all reservations.
-
-### `POST /reservations`
-
-Creates a reservation.
-
-Example body:
-
-```json
-{
-  "userId": "user-1",
-  "resourceId": "resource-1",
-  "startAt": "2026-03-24T10:00:00Z",
-  "endAt": "2026-03-24T11:00:00Z"
-}
-```
-
-Response codes:
-
-- `201` reservation created
-- `400` invalid payload
-- `409` business rule conflict
-
-### `DELETE /reservations/:id`
-
-Deletes a reservation.
-
-## TDD And Tests
-
-The core rules were implemented with TDD.
-
-Approach:
-
-1. write a failing test
-2. add the minimum code needed
-3. refactor without breaking behavior
-
-### Unit Tests
-
-Unit tests focus on `ReservationService`.
-
-Examples:
-
-- past reservation is rejected
-- invalid time range is rejected
-- overlapping reservation is rejected
-- active reservation limit is enforced
-- working hours are enforced
-- idempotency works correctly
-
-Files:
-
-- `tests/unit/reservationService.test.js`
-- `tests/unit/reservationService.clock.test.js`
-
-### Integration Tests
-
-Integration tests check the HTTP API behavior.
-
-Examples:
-
-- reservation is created successfully
-- invalid payload returns `400`
-- business conflicts return `409`
-- reservations list returns `200`
-
-File:
-
-- `tests/integration/reservationApi.test.js`
-
-### Run Tests
+Nejjednodušší varianta je:
 
 ```bash
-npm test
+npm run docker:demo
 ```
 
-Unit only:
+Tento příkaz:
 
-```bash
-npm run test:unit
-```
+- sestaví Docker image
+- spustí PostgreSQL a backend
+- aplikuje Prisma schema
+- vytvoří demo data
+- otevře aplikaci v prohlížeči
 
-Integration only:
+Aplikace bude dostupná na adrese:
 
-```bash
-npm run test:integration
-```
+- `http://127.0.0.1:3001`
 
-## Backend Local Run
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Generate Prisma client:
-
-```bash
-npm run prisma:generate
-```
-
-Start backend:
-
-```bash
-npm run dev
-```
-
-Seed demo data:
-
-```bash
-npm run db:seed-demo
-```
-
-## Frontend
-
-The frontend is a small React + Vite application used for demonstration.
-
-What it can do:
-
-- load users and resources
-- create a reservation
-- show reservation list
-- delete a reservation
-- display backend errors in the UI
-
-Install frontend dependencies:
-
-```bash
-cd frontend
-npm install
-```
-
-Start frontend:
-
-```bash
-npm run dev
-```
-
-Or from project root:
-
-```bash
-npm run dev:frontend
-```
-
-Frontend URL:
-
-- `http://localhost:5173`
-
-## Docker Compose
-
-Run backend and database together:
+Pokud je potřeba spustit kontejnery ručně:
 
 ```bash
 docker compose up -d --build
 ```
 
-Backend:
-
-- `http://localhost:3001`
-- `http://localhost:3001/health`
-
-Database:
-
-- `localhost:55433`
-
-Stop containers:
+Zastavení kontejnerů:
 
 ```bash
 docker compose down
 ```
 
-## CI
+### 2. Spuštění testů
 
-GitHub Actions workflow file:
+```bash
+npm test
+```
 
-- `.github/workflows/ci.yml`
+Coverage report:
 
-The workflow does this:
+```bash
+npm run test:coverage
+```
 
-1. installs dependencies
-2. generates Prisma client
-3. runs backend tests
-4. builds the Docker image
+## Architektura systému
 
-This verifies that the project can be tested and built automatically.
+Projekt je rozdělený do několika jednoduchých vrstev:
 
-## Kubernetes
+- `src/app.js` - HTTP routes a mapování chyb na status kódy
+- `src/server.js` - start aplikace
+- `src/application/services` - business logika
+- `src/application/repositories` - kontrakty repository vrstvy
+- `src/infrastructure/repositories` - Prisma implementace repository vrstvy
+- `prisma/schema.prisma` - datový model databáze
+- `frontend/` - React frontend pro ukázku funkcí
+- `k8s/` - Kubernetes manifests
 
-Kubernetes manifests are in `k8s/`.
+Service vrstva je hlavní část projektu. Právě tam se rozhoduje, zda rezervace projde nebo bude zamítnuta.
 
-Included resources:
+## Strategie testování
 
-- namespace
+Vývoj business logiky probíhal hlavně stylem TDD.
+
+V projektu jsou:
+
+- 8 unit testů
+- 5 integration testů
+
+Testovací soubory:
+
+- `tests/unit/reservationService.test.js`
+- `tests/unit/reservationService.clock.test.js`
+- `tests/integration/reservationApi.test.js`
+
+Unit testy ověřují hlavně jednotlivá business pravidla v `ReservationService`.
+Integration testy ověřují chování HTTP API, tedy route, validaci requestu a správné status kódy odpovědí.
+
+## Pokrytí kódu
+
+Celkové coverage projektu není vysoké, protože nejsou zvlášť testované všechny bootstrapping a infrastructure soubory.
+
+Důležitější je ale business logika:
+
+- `ReservationService` má přibližně 91 % statements coverage
+- `ReservationService` má přibližně 94 % branch coverage
+
+To je pro tento projekt podstatnější než vysoké globální číslo, protože právě service vrstva obsahuje nejdůležitější rozhodovací logiku.
+
+## API
+
+Hlavní endpointy:
+
+- `GET /health`
+- `GET /users`
+- `GET /resources`
+- `GET /reservations`
+- `POST /reservations`
+- `DELETE /reservations/:id`
+
+API vrací:
+
+- `201` při úspěšném vytvoření rezervace
+- `400` při neplatném payloadu
+- `409` při porušení business pravidel
+
+## CI a Kubernetes
+
+GitHub Actions workflow je v `.github/workflows/ci.yml`.
+Pipeline provádí instalaci závislostí, generování Prisma klienta, spuštění testů a build Docker image.
+
+Ve složce `k8s/` jsou připravené manifests pro:
+
+- app
+- postgres
 - configmap
 - secret
-- postgres deployment and service
-- app deployment and service
-- persistent volume claim
+- namespace
 
-Apply manifests:
+## Frontend
 
-```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.yaml
-kubectl apply -f k8s/postgres.yaml
-kubectl apply -f k8s/app.yaml
-```
-
-Check resources:
-
-```bash
-kubectl get all -n reservation-system
-```
-
-Port forward backend:
-
-```bash
-kubectl port-forward service/reservation-app 3001:3000 -n reservation-system
-```
-
-## Current Result
-
-At this point the project includes:
-
-- working backend API
-- real business rules in the service layer
-- unit and integration tests
-- Prisma + PostgreSQL
-- Docker and Docker Compose
-- GitHub Actions CI
-- Kubernetes manifests
-- working React frontend for demonstration
+Frontend slouží hlavně pro ukázku práce aplikace. Umožňuje načíst uživatele a resource, vytvořit rezervaci, zobrazit seznam rezervací a rezervaci smazat. Chybové zprávy z backendu se zobrazují přímo v UI.
