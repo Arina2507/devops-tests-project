@@ -186,6 +186,11 @@ h2 {
   color: #f8fafc;
 }
 
+.field select option {
+  color: #102139;
+  background: #f8fafc;
+}
+
 .field input:focus,
 .field select:focus {
   outline: none;

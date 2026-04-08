@@ -1,4 +1,4 @@
-const { spawnSync } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 
 const appUrl = "http://127.0.0.1:3001";
 const healthUrl = `${appUrl}/health`;
@@ -23,6 +23,17 @@ function wait(ms) {
   });
 }
 
+function launchDetached(command, args) {
+  const child = spawn(command, args, {
+    detached: true,
+    stdio: "ignore",
+    shell: false,
+    windowsHide: true
+  });
+
+  child.unref();
+}
+
 async function waitForHealth() {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
@@ -43,25 +54,22 @@ async function waitForHealth() {
 
 function openBrowser(url) {
   if (process.platform === "win32") {
-    spawnSync("cmd", ["/c", "start", "", url], {
-      stdio: "ignore",
-      detached: true
-    });
+    launchDetached("powershell.exe", [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      `Start-Process \"${url}\"`
+    ]);
     return;
   }
 
   if (process.platform === "darwin") {
-    spawnSync("open", [url], {
-      stdio: "ignore",
-      detached: true
-    });
+    launchDetached("open", [url]);
     return;
   }
 
-  spawnSync("xdg-open", [url], {
-    stdio: "ignore",
-    detached: true
-  });
+  launchDetached("xdg-open", [url]);
 }
 
 async function main() {

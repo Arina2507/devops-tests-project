@@ -27,15 +27,13 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV FRONTEND_DIST_PATH=/app/frontend/dist
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json ./
-COPY prisma ./prisma
-COPY scripts ./scripts
-COPY src ./src
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-COPY --from=frontend-builder /frontend/dist ./frontend/dist
-
-RUN chown -R node:node /app
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node package.json package-lock.json ./
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node scripts ./scripts
+COPY --chown=node:node src ./src
+COPY --chown=node:node frontend/package.json frontend/package-lock.json ./frontend/
+COPY --chown=node:node --from=frontend-builder /frontend/dist ./frontend/dist
 
 USER node
 
