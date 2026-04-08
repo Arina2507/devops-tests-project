@@ -350,20 +350,6 @@ Port forward backend:
 kubectl port-forward service/reservation-app 3001:3000 -n reservation-system
 ```
 
-## How To Present The Project
-
-A simple order for presentation:
-
-1. explain the project goal
-2. show the entities and business rules
-3. open `ReservationService` and explain the validation flow
-4. show unit and integration tests
-5. show API routes in `src/app.js`
-6. show the frontend and create/delete a reservation
-7. show Docker Compose
-8. show GitHub Actions CI
-9. show Kubernetes manifests
-
 ## Current Result
 
 At this point the project includes:

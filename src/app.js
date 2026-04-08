@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
 const express = require("express");
 const { z } = require("zod");
@@ -40,11 +42,20 @@ function toReservationInput(body) {
   return result.data;
 }
 
-function createApp({ reservationService } = {}) {
+function createApp({ reservationService, frontendDistPath } = {}) {
   const app = express();
+  const hasFrontendDist =
+    typeof frontendDistPath === "string" && fs.existsSync(frontendDistPath);
+  const frontendIndexPath = hasFrontendDist
+    ? path.join(frontendDistPath, "index.html")
+    : null;
 
   app.use(cors());
   app.use(express.json());
+
+  if (hasFrontendDist) {
+    app.use(express.static(frontendDistPath));
+  }
 
   app.get("/health", (request, response) => {
     response.status(200).json({ status: "ok" });
@@ -101,6 +112,12 @@ function createApp({ reservationService } = {}) {
       next(error);
     }
   });
+
+  if (frontendIndexPath !== null) {
+    app.get("/", (request, response) => {
+      response.sendFile(frontendIndexPath);
+    });
+  }
 
   app.use((error, request, response, next) => {
     const status = getStatusCode(error);
